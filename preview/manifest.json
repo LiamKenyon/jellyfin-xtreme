@@ -1,0 +1,36 @@
+[
+  {
+    "guid": "d62c56bb-348d-4ec5-8689-080dc5d3ce68",
+    "name": "Xtream Bridge",
+    "overview": "Xtream Live TV improvements \u2014 preview",
+    "description": "Live TV control centre, persistent catalogue, channel rules, XMLTV mapping, multiple providers and optional native DVR. Preview: validate playback and recording on a test server.",
+    "owner": "LiamKenyon",
+    "category": "Live TV",
+    "versions": [
+      {
+        "version": "2.0.0.0",
+        "changelog": "Live TV preview: organised settings, persistent safe sync, channel/group overrides, EPG mapping, diagnostics, multiple providers, optional native DVR and admin catch-up. Real-server verification pending.",
+        "targetAbi": "12.3.0.0",
+        "sourceUrl": "https://raw.githubusercontent.com/LiamKenyon/jellyfin-xtreme/main/packages/xtream-bridge-2.0.0.zip",
+        "checksum": "88cb4aa1b58fa13d5fcd315bd15b238f",
+        "timestamp": "2026-10-26T15:43:29Z"
+      },
+      {
+        "version": "1.0.1.0",
+        "changelog": "Filter non-live stream types and on-demand URLs from Live TV and EPG; optionally hide VOD/series categories; hide provider indexes and clean known stream ID prefixes.",
+        "targetAbi": "12.3.0.0",
+        "sourceUrl": "https://raw.githubusercontent.com/LiamKenyon/jellyfin-xtreme/main/packages/xtream-bridge-1.0.1.zip",
+        "checksum": "2f5d6e0b430e93b43fc5c1066ca740d0",
+        "timestamp": "2026-10-26T10:00:00Z"
+      },
+      {
+        "version": "1.0.0.0",
+        "changelog": "Initial release: Live TV, VOD movies, category controls and XMLTV guide.",
+        "targetAbi": "12.3.0.0",
+        "sourceUrl": "https://raw.githubusercontent.com/LiamKenyon/jellyfin-xtreme/main/packages/xtream-bridge-1.0.0.zip",
+        "checksum": "6ed7fd81099d3aff18930463b91e550b",
+        "timestamp": "2026-10-25T00:00:00Z"
+      }
+    ]
+  }
+]

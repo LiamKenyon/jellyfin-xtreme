@@ -1,0 +1,87 @@
+PASS: Separate port overrides URL
+PASS: Query credentials are encoded
+PASS: Path credentials are encoded
+PASS: Reject stream path injection
+PASS: XMLTV positive offset converted to UTC
+PASS: XMLTV negative half-hour offset
+PASS: XMLTV missing timezone defaults UTC
+PASS: Malformed XMLTV date skipped
+PASS: Reject movies leaked into live endpoint
+PASS: Reject series leaked into live endpoint
+PASS: Reject on-demand URL even when marked live
+PASS: Hide clearly labelled series categories
+PASS: Hide VOD categories when stream type omitted
+PASS: Preserve live movie channels
+PASS: Preserve radio streams
+PASS: Category heuristic can be disabled for genuine linear channels
+PASS: Explicit non-live type rejected even with category heuristic off
+PASS: Strip known stream ID prefix from name
+PASS: Preserve numeric programme titles
+PASS: Preserve legitimate leading channel number in name
+PASS: Strip ID delimiter and normalise spacing
+PASS: Hide provider indexes by default
+PASS: Never substitute stream num as channel number
+PASS: Optional explicit channel numbers supported
+PASS: Live category filtering with numeric/string IDs
+PASS: Provider category exported as channel tag
+PASS: Channel listing does not expose provider num
+PASS: Catalogue requests cached
+PASS: Live playback source
+PASS: Disabled live channel cannot start playback
+PASS: HLS selection
+PASS: XMLTV imports consecutive programmes and decodes XML entities
+PASS: Guide excludes disabled categories
+PASS: Guide excludes non-live entries leaked by provider
+PASS: Non-live entry cannot play through Live TV
+PASS: Full XMLTV feed fetched once across channels
+PASS: Programme overlap filtering
+PASS: EPG off toggle
+PASS: Live TV off toggle
+PASS: New configurations leave VOD disabled
+PASS: VOD category filtering
+PASS: VOD category browsing
+PASS: VOD container and playback URL
+PASS: Disabled VOD cannot start playback
+PASS: VOD off toggle
+PASS: VOD off blocks playback
+PASS: VOD pagination total
+PASS: Playback uses changed credentials
+PASS: Malformed panel JSON produces sanitised error
+PASS: Wrong catalogue shape rejected
+PASS: Disk catalogue reused by a new engine instance
+PASS: Restart does not refetch a saved catalogue
+PASS: Large removal held for review
+PASS: Removal review preserves existing channels and reports counts
+PASS: Explicit approval accepts empty catalogue
+PASS: Approved removal applied
+PASS: New categories remain hidden by default
+PASS: Explicit category selection enables a pending category
+PASS: Channel presentation overrides apply
+PASS: Channel format and alternative playback source
+PASS: Selected alternative resolves the configured channel
+PASS: Individual disabled channel blocked
+PASS: Per-channel guide offset applied
+PASS: Malformed refreshed guide retains previous programmes
+PASS: Historical guide retained after provider omits past listings
+PASS: Multiple providers have isolated stable channel IDs
+PASS: Separate provider snapshots survive restart even for identical accounts
+PASS: Settings response blanks credentials without mutating configuration
+PASS: Blank saved passwords preserve existing credentials
+PASS: Null imported rules rejected safely
+PASS: Unsafe provider IDs rejected
+PASS: New management API requires administrator authorization
+PASS: Native tuner mode suppresses duplicate plugin channels
+PASS: DVR setup preserves unrelated tuners including unnamed tuners
+PASS: DVR playlist uses EPG IDs and clean sequential numbers
+PASS: Native tuner connection allowance and sharing configured
+PASS: Native channel IDs retained for category collections
+PASS: Native XMLTV programmes map to exported channels
+PASS: Credential-bearing native playlist is private on Unix
+PASS: Disabling DVR removes only plugin-owned configuration
+PASS: External XML entities rejected
+PASS: Management endpoint requires administrator policy
+PASS: Configuration page embedded
+PASS: Live TV registered with Jellyfin DI
+PASS: VOD registered with Jellyfin DI
+PASS: Admin connection discovery succeeds with mock account
+86 checks passed.

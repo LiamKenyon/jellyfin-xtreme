@@ -1,0 +1,1 @@
+{"name":"xtream-bridge-tests","private":true,"scripts":{"test":"node Tests/settings-v2.cjs"},"devDependencies":{"jsdom":"26.1.0"}}

@@ -12,9 +12,8 @@ public static class Panel
 {
  // Dedicated client avoids the host's URL logging handlers (URLs contain provider credentials).
  private static readonly HttpClient Client = new(new HttpClientHandler { AutomaticDecompression = DecompressionMethods.All, AllowAutoRedirect = false }) { Timeout = TimeSpan.FromMinutes(3), MaxResponseContentBufferSize = 128 * 1024 * 1024 };
- private static readonly SemaphoreSlim Gate = new(1, 1);
- private static readonly Dictionary<string, (DateTime Until, JsonElement Data)> Cache = new();
- private static string ActiveKey = "";
+ private static readonly System.Collections.Concurrent.ConcurrentDictionary<string,SemaphoreSlim> Gates = new();
+ private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, (DateTime Until, JsonElement Data)> Cache = new();
  public static Settings Config => Plugin.Instance.Configuration;
  public static bool Ready(Settings c) => !string.IsNullOrWhiteSpace(c.ServerUrl) && c.Username.Length > 0 && c.Password.Length > 0;
  public static string Key(Settings c) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(c))));
@@ -38,22 +37,43 @@ public static class Panel
  public static async Task<JsonElement> Api(Settings c, string action, CancellationToken ct, string extra = "", bool fresh = false)
  {
   var key = Key(c);
-  await Gate.WaitAsync(ct);
+  var gate=Gates.GetOrAdd(key,_=>new(1,1)); await gate.WaitAsync(ct);
   try {
-   if (ActiveKey != key) { Cache.Clear(); ActiveKey = key; }
-   var cacheKey = action + extra;
+   foreach(var expired in Cache.Where(x=>x.Value.Until<DateTime.UtcNow).Select(x=>x.Key)) Cache.TryRemove(expired,out _);
+   var cacheKey = key + action + extra;
    if (!fresh && Cache.TryGetValue(cacheKey, out var hit) && hit.Until > DateTime.UtcNow) return hit.Data;
    try {
-    using var response = await Client.GetAsync(Url(c, "player_api.php", (action.Length > 0 ? "&action=" + E(action) : "") + extra), ct);
+    using var timeout=CancellationTokenSource.CreateLinkedTokenSource(ct); timeout.CancelAfter(TimeSpan.FromMinutes(3));
+    using var response = await Send(Url(c, "player_api.php", (action.Length > 0 ? "&action=" + E(action) : "") + extra),timeout.Token);
     if (!response.IsSuccessStatusCode) throw new PanelException("Panel request failed (HTTP " + (int)response.StatusCode + ").");
-    using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync(ct));
+    await response.Content.LoadIntoBufferAsync(128L*1024*1024,timeout.Token);
+    using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync(timeout.Token));
     var data = doc.RootElement.Clone();
     if (action.Length > 0 && !action.Contains("info") && data.ValueKind != JsonValueKind.Array) throw new PanelException("Panel returned an unexpected catalogue response. Check credentials and subscription.");
     Cache[cacheKey] = (DateTime.UtcNow.AddMinutes(10), data); return data;
    } catch (OperationCanceledException) when (!ct.IsCancellationRequested) { throw new PanelException("Panel request timed out."); }
    catch (HttpRequestException) { throw new PanelException("Cannot reach panel. Check URL, port and TLS certificate."); }
    catch (JsonException) { throw new PanelException("Panel returned invalid JSON."); }
-  } finally { Gate.Release(); }
+  } finally { gate.Release(); }
+ }
+ public static async Task<HttpResponseMessage> Send(Uri uri,CancellationToken ct)
+ {
+  for(int attempt=0;;attempt++){
+   try {var r=await Client.GetAsync(uri,HttpCompletionOption.ResponseHeadersRead,ct);
+    if(attempt<2 && ((int)r.StatusCode==429 || (int)r.StatusCode>=500)){r.Dispose();await Task.Delay(TimeSpan.FromSeconds(1<<attempt),ct);continue;}return r;
+   }catch(HttpRequestException) when(attempt<2){await Task.Delay(TimeSpan.FromSeconds(1<<attempt),ct);}
+  }
+ }
+ public static async Task Download(Uri uri,string destination,long maxBytes,CancellationToken ct)
+ {
+  try {
+   using var timeout=CancellationTokenSource.CreateLinkedTokenSource(ct);timeout.CancelAfter(TimeSpan.FromMinutes(3));
+   using var r=await Send(uri,timeout.Token);if(!r.IsSuccessStatusCode)throw new PanelException("Feed request failed (HTTP "+(int)r.StatusCode+").");
+   await using var input=await r.Content.ReadAsStreamAsync(timeout.Token);await using var output=File.Create(destination);
+   if(!OperatingSystem.IsWindows())File.SetUnixFileMode(destination,UnixFileMode.UserRead|UnixFileMode.UserWrite);
+   byte[] buffer=new byte[65536];long size=0;int read;
+   while((read=await input.ReadAsync(buffer,timeout.Token))>0){size+=read;if(size>maxBytes)throw new PanelException("Feed exceeds the configured safety bound.");await output.WriteAsync(buffer.AsMemory(0,read),timeout.Token);}
+  }catch(HttpRequestException){throw new PanelException("Feed network request failed.");}catch(OperationCanceledException) when(!ct.IsCancellationRequested){throw new PanelException("Feed request timed out.");}
  }
  private static readonly SemaphoreSlim GuideGate = new(1,1);
  private static string GuideKey = "";

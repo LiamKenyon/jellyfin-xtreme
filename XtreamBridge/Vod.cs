@@ -11,7 +11,7 @@ public sealed class Vod : IChannel,IRequiresMediaInfoCallback
  public string Description=>"On-demand movies from your Xtream panel";
  public string DataVersion=>"1-"+Panel.Key(Panel.Config);
  public string HomePageUrl=>"";
- public ChannelParentalRating ParentalRating=>ChannelParentalRating.GeneralAudience;
+ public ChannelParentalRating ParentalRating=>ChannelParentalRating.Adult;
  public bool IsEnabledFor(string userId)=>Panel.Config.EnableVod && Panel.Ready(Panel.Config);
  public InternalChannelFeatures GetChannelFeatures()=>new() { MediaTypes=[ChannelMediaType.Video],ContentTypes=[ChannelMediaContentType.Movie],SupportsContentDownloading=false,AutoRefreshLevels=1 };
  public IEnumerable<ImageType> GetSupportedChannelImages()=>[];

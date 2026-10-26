@@ -1,0 +1,13 @@
+PASS: Eight organised tabs
+PASS: Saved password is not echoed
+PASS: Tab switches panels
+PASS: Channel list paginated
+PASS: Provider titles render as text
+PASS: Next page works
+PASS: Search filters entire catalogue
+PASS: Channel overrides saved
+PASS: Live TV edits preserve disabled VOD
+PASS: Keyboard navigation and focus
+PASS: Additional provider editor
+PASS: DVR mode change confirmation respected
+12 UI interaction checks passed.

@@ -5,28 +5,26 @@ using MediaBrowser.Model.LiveTv;
 namespace XtreamBridge;
 public sealed class LiveTv : ILiveTvService
 {
+ private readonly LiveEngine live;
+ private readonly GuideEngine guide;
+ private readonly Playback playback;
+ public LiveTv(LiveEngine? live=null,GuideEngine? guide=null,Playback? playback=null){this.live=live??new();this.guide=guide??new(this.live);this.playback=playback??new(this.live);}
  public string Name => "Xtream Bridge";
  public string HomePageUrl => "";
  public async Task<IEnumerable<ChannelInfo>> GetChannelsAsync(CancellationToken ct)
  {
-  var c=Panel.Config;if (!c.EnableLiveTv || !Panel.Ready(c)) return [];
-  var (rows,categories)=await LiveContent.Catalogue(c,ct);
-  return rows.Select(r=>new ChannelInfo { Id=Panel.S(r,"stream_id"),Name=LiveContent.Name(r),Number=LiveContent.Number(c,r),ImageUrl=Panel.S(r,"stream_icon"),ChannelType=Panel.S(r,"stream_type").Contains("radio",StringComparison.OrdinalIgnoreCase)?ChannelType.Radio:ChannelType.TV,ChannelGroup=categories.GetValueOrDefault(Panel.S(r,"category_id"),"Uncategorised") }).ToArray();
+  var c=Panel.Config;if(!c.EnableLiveTv||c.NativeDvr)return [];
+  return (await live.Inventory(ct)).Select(e=>new ChannelInfo{Id=e.Id,Name=e.Name,Number=c.ShowChannelNumbers?e.Number:"",ImageUrl=e.Logo,ChannelGroup=e.Group,Tags=e.Group.Length>0?[e.Group]:[],ChannelType=e.Radio?ChannelType.Radio:ChannelType.TV}).ToList();
  }
  public async Task<IEnumerable<ProgramInfo>> GetProgramsAsync(string channelId,DateTime startDateUtc,DateTime endDateUtc,CancellationToken cancellationToken)
  {
-  var c=Panel.Config;if (!c.EnableLiveTv || !c.EnableEpg || !Panel.Ready(c)) return [];
-  var guide=await Panel.Epg(c,cancellationToken);
-  return guide.GetValueOrDefault(channelId,[]).Where(p=>p.StartDate<endDateUtc && p.EndDate>startDateUtc).ToArray();
+  if(!Panel.Config.EnableLiveTv||!Panel.Config.EnableEpg)return [];
+  var entry=(await live.Inventory(cancellationToken)).FirstOrDefault(e=>e.Id==channelId);
+  return entry==null?[]:await guide.Programmes(entry,startDateUtc,endDateUtc,cancellationToken);
  }
- public async Task<MediaSourceInfo> GetChannelStream(string channelId,string streamId,CancellationToken cancellationToken)
- {
-  var c=Panel.Config;
-  if (!c.EnableLiveTv || !(await GetChannelsAsync(cancellationToken)).Any(x=>x.Id==channelId)) throw new PanelException("Channel disabled or unavailable.");
-  var format=c.LiveFormat=="m3u8" ? "m3u8" : "ts";
-  return new MediaSourceInfo { Id="xtream-live-"+channelId,Path=Panel.Stream(c,"live",channelId,format),Protocol=MediaProtocol.Http,IsRemote=true,Container=format,SupportsDirectPlay=false,SupportsDirectStream=true,SupportsTranscoding=true,IsInfiniteStream=true,ReadAtNativeFramerate=false };
- }
- public async Task<List<MediaSourceInfo>> GetChannelStreamMediaSources(string channelId,CancellationToken cancellationToken) => [await GetChannelStream(channelId,"",cancellationToken)];
+ public Task<MediaSourceInfo> GetChannelStream(string channelId,string streamId,CancellationToken cancellationToken)=>playback.Selected(channelId,streamId,cancellationToken);
+
+ public Task<List<MediaSourceInfo>> GetChannelStreamMediaSources(string channelId,CancellationToken cancellationToken) => playback.Sources(channelId,cancellationToken);
  public Task CloseLiveStream(string id,CancellationToken cancellationToken)=>Task.CompletedTask;
  public Task ResetTuner(string id,CancellationToken cancellationToken)=>Task.CompletedTask;
  public Task<IEnumerable<TimerInfo>> GetTimersAsync(CancellationToken cancellationToken)=>Task.FromResult<IEnumerable<TimerInfo>>([]);
