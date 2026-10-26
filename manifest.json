@@ -11,7 +11,7 @@
         "version": "1.0.0.0",
         "changelog": "Initial release: Live TV, VOD movies, category controls and XMLTV guide.",
         "targetAbi": "12.3.0.0",
-        "sourceUrl": "https://raw.githubusercontent.com/LiamKenyon/jellyfin-xtream/main/packages/xtream-bridge-1.0.0.zip",
+        "sourceUrl": "https://raw.githubusercontent.com/LiamKenyon/jellyfin-xtreme/main/packages/xtream-bridge-1.0.0.zip",
         "checksum": "6ed7fd81099d3aff18930463b91e550b",
         "timestamp": "2026-10-25T00:00:00Z"
       }
