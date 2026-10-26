@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html><head><title>Xtream Bridge</title></head><body>
+<div id="XtreamBridgePage" data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-input,emby-button,emby-checkbox,emby-select">
+<div data-role="content"><div class="content-primary"><form id="XtreamForm">
+<h1>Xtream Bridge</h1><p>Connect your panel, choose categories and watch through Jellyfin.</p>
+<div class="inputContainer"><label class="inputLabel" for="ServerUrl">Server URL</label><input is="emby-input" id="ServerUrl" type="url" required placeholder="https://panel.example.com" /></div>
+<div class="inputContainer"><label class="inputLabel" for="Port">Port (0 = URL/default port)</label><input is="emby-input" id="Port" type="number" min="0" max="65535" value="0" required /></div>
+<div class="inputContainer"><label class="inputLabel" for="Username">Username</label><input is="emby-input" id="Username" autocomplete="off" required /></div>
+<div class="inputContainer"><label class="inputLabel" for="Password">Password</label><input is="emby-input" id="Password" type="password" autocomplete="new-password" required /></div>
+<label class="checkboxContainer"><input is="emby-checkbox" type="checkbox" id="EnableLiveTv"/><span>Enable Live TV</span></label>
+<label class="checkboxContainer"><input is="emby-checkbox" type="checkbox" id="EnableVod"/><span>Enable VOD movies</span></label>
+<label class="checkboxContainer"><input is="emby-checkbox" type="checkbox" id="EnableEpg"/><span>Automatically import EPG from the panel</span></label>
+<div class="selectContainer"><label class="selectLabel" for="LiveFormat">Live stream format</label><select is="emby-select" id="LiveFormat"><option value="ts">MPEG-TS (default)</option><option value="m3u8">HLS</option></select></div>
+<button is="emby-button" type="submit" class="raised button-submit block"><span>Save settings</span></button>
+<button is="emby-button" type="button" id="Discover" class="raised block"><span>Save, test connection &amp; load categories</span></button>
+<p id="Status" role="status" aria-live="polite"></p>
+<p>Category changes take effect after saving. Run “Refresh Guide” and “Refresh Internet Channels” in Dashboard → Scheduled Tasks afterwards. The guide also refreshes on Jellyfin’s schedule.</p>
+<div class="inputContainer"><label class="inputLabel" for="Filter">Filter categories</label><input is="emby-input" id="Filter" type="search" /></div>
+<h2>Live TV categories</h2><div id="LiveActions"></div><div id="LiveCategories"></div>
+<h2>VOD categories</h2><div id="VodActions"></div><div id="VodCategories"></div>
+<p>New categories are enabled by default. Turn off any categories you do not want available to your household. These switches are server-wide, not per-user parental controls.</p>
+<p>Credentials are stored in Jellyfin’s plugin configuration. Protect your server configuration and backups. VOD appears as “Xtream Movies”; series, catch-up and provider recording are not included in this release.</p>
+</form></div></div>
+<script>
+(function () {
+ 'use strict';
+ const page = document.querySelector('#XtreamBridgePage');
+ const pluginId = 'd62c56bb-348d-4ec5-8689-080dc5d3ce68';
+ const textFields = ['ServerUrl','Username','Password','LiveFormat'];
+ const flags = ['EnableLiveTv','EnableVod','EnableEpg'];
+ let config, categories = { Live: [], Vod: [] };
+ const $ = id => page.querySelector('#' + id);
+ const status = message => { $('Status').textContent = message; };
+ function remember(kind) {
+  if (!config) return;
+  const key = 'Disabled' + kind + 'Categories';
+  const disabled = new Set(config[key] || []);
+  $(kind + 'Categories').querySelectorAll('input').forEach(input => input.checked ? disabled.delete(input.dataset.id) : disabled.add(input.dataset.id));
+  config[key] = Array.from(disabled);
+ }
+ function render(kind) {
+  const box = $(kind + 'Categories'); box.replaceChildren();
+  const disabled = new Set(config['Disabled' + kind + 'Categories'] || []);
+  categories[kind].forEach(item => {
+   const label = document.createElement('label'); label.className = 'checkboxContainer'; label.style.display = 'block'; label.dataset.name = item.Name.toLowerCase();
+   const input = document.createElement('input'); input.type = 'checkbox'; input.dataset.id = item.Id; input.checked = !disabled.has(item.Id); input.addEventListener('change', () => remember(kind));
+   const span = document.createElement('span'); span.textContent = ' ' + item.Name;
+   label.append(input,span); box.append(label);
+  });
+  const actions = $(kind+'Actions'); actions.replaceChildren();
+  [true,false].forEach(checked => { const b=document.createElement('button'); b.type='button'; b.className='raised emby-button'; b.textContent=checked?'Enable visible':'Disable visible'; b.onclick=()=>{box.querySelectorAll('label').forEach(l=>{if(!l.hidden)l.querySelector('input').checked=checked;});remember(kind);};actions.append(b); });
+ }
+ async function save() {
+  if (!config) throw new Error('Settings have not loaded.');
+  if (!$('XtreamForm').reportValidity()) throw new Error('Please complete the connection fields.');
+  textFields.forEach(k => config[k] = $(k).value);
+  config.ServerUrl = config.ServerUrl.trim(); config.Port=Number($('Port').value);
+  flags.forEach(k => config[k] = $(k).checked);
+  remember('Live');remember('Vod');
+  await ApiClient.updatePluginConfiguration(pluginId, config);
+ }
+ page.addEventListener('viewshow',async function () {
+  try {
+   config=await ApiClient.getPluginConfiguration(pluginId);
+   textFields.forEach(k=>$(k).value=config[k] || '');$('Port').value=config.Port || 0;
+   flags.forEach(k=>$(k).checked=config[k]);
+   categories={Live:[],Vod:[]};['Live','Vod'].forEach(render);
+   status('Load categories to view and change your saved selections.');
+  } catch (_) { status('Could not load settings. Sign in as a Jellyfin administrator.'); }
+ });
+ $('XtreamForm').addEventListener('submit',async e=>{e.preventDefault();try{await save();status('Saved. Refresh the guide and internet channels to apply catalogue changes.');}catch(e){status(e.message || 'Could not save settings.');}});
+ $('Discover').addEventListener('click',async function () {
+  this.disabled=true;status('Connecting and loading categories…');
+  try {
+   await save();
+   const response=await ApiClient.ajax({type:'POST',url:ApiClient.getUrl('XtreamBridge/Discover'),dataType:'json'});
+   // Jellyfin normally preserves PascalCase; also accept camelCase responses.
+   ['Live','Vod'].forEach(kind=>{categories[kind]=(response[kind] || response[kind.toLowerCase()] || []).map(x=>({Id:x.Id??x.id,Name:x.Name??x.name}));render(kind);});
+   status(response.Message || response.message || 'Connected. Choose categories, then save.');
+  } catch(e) {
+   let message=e.message || 'Connection failed. Check saved credentials, URL and port.';
+   if(e && typeof e.json==='function'){try{const data=await e.json();message=data.Message||data.message||message;}catch(_) {}}
+   status(message);
+  } finally {this.disabled=false;}
+ });
+ $('Filter').addEventListener('input',function(){const term=this.value.toLowerCase();['Live','Vod'].forEach(k=>$(k+'Categories').querySelectorAll('label').forEach(l=>l.hidden=!l.dataset.name.includes(term)));});
+})();
+</script></div></body></html>
