@@ -8,6 +8,14 @@
     "category": "Live TV",
     "versions": [
       {
+        "version": "1.0.1.0",
+        "changelog": "Filter non-live stream types and on-demand URLs from Live TV and EPG; optionally hide VOD/series categories; hide provider indexes and clean known stream ID prefixes.",
+        "targetAbi": "12.3.0.0",
+        "sourceUrl": "https://raw.githubusercontent.com/LiamKenyon/jellyfin-xtreme/main/packages/xtream-bridge-1.0.1.zip",
+        "checksum": "2f5d6e0b430e93b43fc5c1066ca740d0",
+        "timestamp": "2026-10-26T10:00:00Z"
+      },
+      {
         "version": "1.0.0.0",
         "changelog": "Initial release: Live TV, VOD movies, category controls and XMLTV guide.",
         "targetAbi": "12.3.0.0",

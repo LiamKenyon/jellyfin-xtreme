@@ -10,8 +10,8 @@ public sealed class LiveTv : ILiveTvService
  public async Task<IEnumerable<ChannelInfo>> GetChannelsAsync(CancellationToken ct)
  {
   var c=Panel.Config;if (!c.EnableLiveTv || !Panel.Ready(c)) return [];
-  var categories=Panel.Rows(await Panel.Api(c,"get_live_categories",ct)).GroupBy(r=>Panel.S(r,"category_id")).ToDictionary(g=>g.Key,g=>Panel.S(g.First(),"category_name"));
-  return Panel.Rows(await Panel.Api(c,"get_live_streams",ct)).Where(r=>Panel.Allowed(c,r,true)).Where(r=>long.TryParse(Panel.S(r,"stream_id"),out _)).Select(r=>new ChannelInfo { Id=Panel.S(r,"stream_id"),Name=Panel.S(r,"name"),Number=Panel.S(r,"num"),ImageUrl=Panel.S(r,"stream_icon"),ChannelType=ChannelType.TV,ChannelGroup=categories.GetValueOrDefault(Panel.S(r,"category_id"),"Uncategorised") }).ToArray();
+  var (rows,categories)=await LiveContent.Catalogue(c,ct);
+  return rows.Select(r=>new ChannelInfo { Id=Panel.S(r,"stream_id"),Name=LiveContent.Name(r),Number=LiveContent.Number(c,r),ImageUrl=Panel.S(r,"stream_icon"),ChannelType=Panel.S(r,"stream_type").Contains("radio",StringComparison.OrdinalIgnoreCase)?ChannelType.Radio:ChannelType.TV,ChannelGroup=categories.GetValueOrDefault(Panel.S(r,"category_id"),"Uncategorised") }).ToArray();
  }
  public async Task<IEnumerable<ProgramInfo>> GetProgramsAsync(string channelId,DateTime startDateUtc,DateTime endDateUtc,CancellationToken cancellationToken)
  {

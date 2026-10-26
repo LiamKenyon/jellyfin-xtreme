@@ -12,6 +12,8 @@ public sealed class Settings : BasePluginConfiguration
  public bool EnableLiveTv { get; set; } = true;
  public bool EnableVod { get; set; } = true;
  public bool EnableEpg { get; set; } = true;
+ public bool ShowChannelNumbers { get; set; } = false;
+ public bool HideOnDemandCategories { get; set; } = true;
  public string LiveFormat { get; set; } = "ts";
  public string[] DisabledLiveCategories { get; set; } = [];
  public string[] DisabledVodCategories { get; set; } = [];

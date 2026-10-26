@@ -64,7 +64,7 @@ public static class Panel
   await GuideGate.WaitAsync(ct);
   try {
    var key = Key(c); if (GuideKey == key && GuideUntil > DateTime.UtcNow) return Guide;
-   var rows = Rows(await Api(c,"get_live_streams",ct)).Where(r => Allowed(c,r,true));
+   var (rows, _) = await LiveContent.Catalogue(c,ct);
    var mapping = rows.Where(r=>S(r,"epg_channel_id").Length>0).GroupBy(r=>S(r,"epg_channel_id")).ToDictionary(g=>g.Key,g=>g.Select(r=>S(r,"stream_id")).ToArray());
    var next = new Dictionary<string,List<ProgramInfo>>();
    try {

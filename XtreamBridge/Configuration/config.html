@@ -10,6 +10,8 @@
 <label class="checkboxContainer"><input is="emby-checkbox" type="checkbox" id="EnableLiveTv"/><span>Enable Live TV</span></label>
 <label class="checkboxContainer"><input is="emby-checkbox" type="checkbox" id="EnableVod"/><span>Enable VOD movies</span></label>
 <label class="checkboxContainer"><input is="emby-checkbox" type="checkbox" id="EnableEpg"/><span>Automatically import EPG from the panel</span></label>
+<label class="checkboxContainer"><input is="emby-checkbox" type="checkbox" id="HideOnDemandCategories"/><span>Hide categories labelled VOD, series, TV shows or on-demand from Live TV</span></label>
+<label class="checkboxContainer"><input is="emby-checkbox" type="checkbox" id="ShowChannelNumbers"/><span>Show explicit provider channel numbers (never stream IDs or list indexes)</span></label>
 <div class="selectContainer"><label class="selectLabel" for="LiveFormat">Live stream format</label><select is="emby-select" id="LiveFormat"><option value="ts">MPEG-TS (default)</option><option value="m3u8">HLS</option></select></div>
 <button is="emby-button" type="submit" class="raised button-submit block"><span>Save settings</span></button>
 <button is="emby-button" type="button" id="Discover" class="raised block"><span>Save, test connection &amp; load categories</span></button>
@@ -27,7 +29,7 @@
  const page = document.querySelector('#XtreamBridgePage');
  const pluginId = 'd62c56bb-348d-4ec5-8689-080dc5d3ce68';
  const textFields = ['ServerUrl','Username','Password','LiveFormat'];
- const flags = ['EnableLiveTv','EnableVod','EnableEpg'];
+ const flags = ['EnableLiveTv','EnableVod','EnableEpg','HideOnDemandCategories','ShowChannelNumbers'];
  let config, categories = { Live: [], Vod: [] };
  const $ = id => page.querySelector('#' + id);
  const status = message => { $('Status').textContent = message; };
